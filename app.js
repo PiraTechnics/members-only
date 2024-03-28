@@ -14,7 +14,7 @@ const logger = require("morgan");
 require("dotenv").config();
 
 const indexRouter = require("./routes/index");
-const usersRouter = require("./routes/users");
+//const usersRouter = require("./routes/users");
 
 const app = express();
 
@@ -71,7 +71,9 @@ passport.use(
 			if (!user) {
 				return done(null, false, { message: "Incorrect username" });
 			}
-			if (user.password !== password) {
+			const match = await bcrypt.compare(password, user.password);
+			if (!match) {
+				// Passwords do not match
 				return done(null, false, { message: "Incorrect password" });
 			}
 			return done(null, user);
@@ -101,7 +103,7 @@ app.use(passport.session());
  */
 
 app.use("/", indexRouter);
-app.use("/users", usersRouter);
+//app.use("/users", usersRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
