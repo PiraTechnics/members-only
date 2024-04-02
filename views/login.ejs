@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title><%= title %></title>
+		<title>Log In</title>
 		<link rel="stylesheet" href="/stylesheets/style.css" />
 	</head>
 	<body>
@@ -15,6 +15,11 @@
 			</div>
 
 			<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+				<% if (currentUser.member) { %>
+				<h3>You're already logged in, <%= currentUser.username %></h3>
+				<p>No need to re-log, come on in:</p>
+				<a href="/" class="text-blue-500 underline">Home Page</a>
+				<% } else { %>
 				<form class="space-y-6" action="/login" method="POST">
 					<div>
 						<label
@@ -78,6 +83,7 @@
 						>Sign up today!</a
 					>
 				</p>
+				<% } %>
 			</div>
 		</div>
 	</body>

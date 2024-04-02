@@ -12,10 +12,9 @@ const bcrypt = require("bcryptjs");
 
 // All Messages, only show if signed in
 router.get("/", function (req, res) {
-	if (res.locals.currentUser) {
+	if (req.isAuthenticated()) {
 		res.render("index", {
 			title: "Members Only",
-			user: res.locals.currentUser,
 		});
 	} else {
 		res.redirect("/login");
@@ -23,17 +22,15 @@ router.get("/", function (req, res) {
 });
 
 router.get("/login", function (req, res, next) {
-	res.render("login", {
-		title: "Log In",
-	});
+	res.render("login");
 });
 
 router.get("/signup", function (req, res) {
-	res.render("signup", { title: "Sign up" });
+	res.render("signup");
 });
 
 router.get("/join", function (req, res) {
-	res.render("join", { user: res.locals.currentUser, errorMessage: false });
+	res.render("join");
 });
 
 router.get("/logout", (req, res, next) => {
@@ -124,11 +121,10 @@ router.post("/join", [
 		if (!errors.isEmpty()) {
 			//re-render with blank form and error messages
 			res.render("join", {
-				user: res.locals.currentUser,
 				errorMessage: errors.toString(),
 			});
 			return;
-		} else if (!res.locals.user) {
+		} else if (!req.isAuthenticated()) {
 			//No user session, redirect to login page
 			res.redirect("/login");
 		} else {
@@ -136,7 +132,6 @@ router.post("/join", [
 			if (req.body.accessCode !== process.env.SECRET) {
 				// not correct, re-render join form
 				res.render("join", {
-					user: res.locals.currentUser,
 					errorMessage: "wrong secret, try again",
 				});
 				return;

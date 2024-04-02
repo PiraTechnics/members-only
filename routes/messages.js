@@ -1,8 +1,6 @@
 const express = require("express");
 const router = express.Router();
 
-//const Message = require("../models/message");
-const User = require("../models/user");
 const Message = require("../models/message");
 const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
@@ -10,10 +8,9 @@ const { body, validationResult } = require("express-validator");
 /* GET routes */
 
 router.get("/new-message", function (req, res) {
-	if (res.locals.currentUser) {
+	if (req.isAuthenticated()) {
 		res.render("new-message", {
 			title: "Members Only",
-			user: res.locals.currentUser,
 		});
 	} else {
 		res.redirect("/login");
@@ -23,11 +20,13 @@ router.get("/new-message", function (req, res) {
 router.get(
 	"/message-board",
 	asyncHandler(async (req, res, next) => {
-		if (res.locals.currentUser) {
-			const allMessages = await Message.find();
+		if (req.isAuthenticated()) {
+			const allMessages = await Message.find()
+				.populate("user", "username")
+				.exec();
+			console.log("did we get here?");
 			res.render("message-board", {
 				title: "Members Only",
-				user: res.locals.user,
 				messages: allMessages,
 			});
 		} else {
@@ -55,7 +54,6 @@ router.post("/new-message", [
 
 			res.render("new-message", {
 				title: "Members Only",
-				user: res.locals.currentUser,
 			});
 			return;
 		} else if (!req.isAuthenticated()) {
@@ -63,14 +61,10 @@ router.post("/new-message", [
 			res.redirect("/login");
 		} else {
 			//everything correct, save message to DB and show message board with new posting
-
-			console.log(res.locals.user);
-			console.log(req.user);
-
 			const message = new Message({
 				title: req.body.title,
 				text: req.body.message,
-				user: res.locals.user._id,
+				user: req.user,
 			});
 
 			await message.save();
@@ -78,7 +72,6 @@ router.post("/new-message", [
 
 			res.render("message-board", {
 				title: "Members Only",
-				user: res.locals.user,
 				messages: allMessages,
 			});
 		}
