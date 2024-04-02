@@ -15,7 +15,7 @@
 			</div>
 
 			<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-				<% if (currentUser.member) { %>
+				<% if (currentUser) { %>
 				<h3>You're already logged in, <%= currentUser.username %></h3>
 				<p>No need to re-log, come on in:</p>
 				<a href="/" class="text-blue-500 underline">Home Page</a>

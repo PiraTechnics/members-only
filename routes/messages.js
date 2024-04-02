@@ -9,9 +9,15 @@ const { body, validationResult } = require("express-validator");
 
 router.get("/new-message", function (req, res) {
 	if (req.isAuthenticated()) {
-		res.render("new-message", {
-			title: "Members Only",
-		});
+		// no user logged in, redirect to login page
+		if (req.user.member === false) {
+			//User is not a member (not allowed to post), redirect to home
+			res.redirect("/");
+		} else {
+			res.render("new-message", {
+				title: "Members Only",
+			});
+		}
 	} else {
 		res.redirect("/login");
 	}
@@ -24,7 +30,6 @@ router.get(
 			const allMessages = await Message.find()
 				.populate("user", "username")
 				.exec();
-			console.log("did we get here?");
 			res.render("message-board", {
 				title: "Members Only",
 				messages: allMessages,
@@ -38,14 +43,10 @@ router.get(
 /* POST routes */
 router.post("/new-message", [
 	//sanitize input and add the message to the database
-	body("title", "Title should be at least 6 characters long")
-		.isLength({
-			min: 6,
-		})
-		.escape(),
-	body("message", "Message must be at least 8 characters")
-		.isLength({ min: 8 })
-		.escape(),
+	body("title", "Title should be at least 6 characters long").isLength({
+		min: 6,
+	}),
+	body("message", "Message must be at least 8 characters").isLength({ min: 8 }),
 	asyncHandler(async (req, res, next) => {
 		const errors = validationResult(req);
 
@@ -59,6 +60,9 @@ router.post("/new-message", [
 		} else if (!req.isAuthenticated()) {
 			//No user session, redirect to login page
 			res.redirect("/login");
+		} else if (req.user.member === false) {
+			//User is not a member (not allowed to post), redirect to home
+			res.redirect("/");
 		} else {
 			//everything correct, save message to DB and show message board with new posting
 			const message = new Message({
@@ -70,10 +74,7 @@ router.post("/new-message", [
 			await message.save();
 			const allMessages = await Message.find();
 
-			res.render("message-board", {
-				title: "Members Only",
-				messages: allMessages,
-			});
+			res.redirect("/messages/message-board");
 		}
 	}),
 ]);

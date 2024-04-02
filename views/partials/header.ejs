@@ -1,0 +1,22 @@
+<header class="mb-4">
+	<nav
+		class="mx-auto flex max-w-7xl items-center justify-between px-6 lg:px-8"
+		aria-label="Global"
+	>
+		<div class="flex flex-col sm:flex-row gap-2">
+			<a class="underline" href="/">Home</a>
+			<a class="underline" href="/messages/message-board">All Posts</a>
+			<% if (currentUser.member) { %>
+			<a class="underline" href="/messages/new-message">New Post</a>
+			<% } %>
+		</div>
+		<div class="justify-end gap-4">
+			<div class="flex flex-col">
+				<span class="italic">Welcome, <%= currentUser.username %></span>
+				<a class="text-blue-500 underline" href="/logout"
+					>Log Out <span aria-hidden="true">&rarr;</span></a
+				>
+			</div>
+		</div>
+	</nav>
+</header>

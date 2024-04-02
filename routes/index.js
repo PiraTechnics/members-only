@@ -30,7 +30,7 @@ router.get("/signup", function (req, res) {
 });
 
 router.get("/join", function (req, res) {
-	res.render("join");
+	res.render("join", { errorMessage: false });
 });
 
 router.get("/logout", (req, res, next) => {

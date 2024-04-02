@@ -16,7 +16,9 @@ const MessageSchema = new Schema({
 });
 
 MessageSchema.virtual("formatted_timestamp").get(function () {
-	return DateTime.fromJSDate(this.timestamp).toLocaleString(DateTime.DATE_MED);
+	return DateTime.fromJSDate(this.timestamp).toLocaleString(
+		DateTime.DATETIME_FULL
+	);
 });
 
 module.exports = connection.model("Message", MessageSchema);
