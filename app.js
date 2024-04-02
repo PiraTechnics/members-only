@@ -14,6 +14,7 @@ const logger = require("morgan");
 require("dotenv").config();
 
 const indexRouter = require("./routes/index");
+const messageRouter = require("./routes/messages");
 //const usersRouter = require("./routes/users");
 
 const app = express();
@@ -61,6 +62,7 @@ app.use(
  */
 
 const passport = require("passport");
+const bcrypt = require("bcryptjs");
 const LocalStrategy = require("passport-local").Strategy;
 const User = require("./models/user");
 
@@ -96,13 +98,20 @@ passport.deserializeUser(async (id, done) => {
 	}
 });
 
-app.use(passport.session());
+app.use(passport.initialize()); //init's Passport for incoming requests, enabling auth
+app.use(passport.session()); //middleware for altering req object and running sessions
+
+app.use((req, res, next) => {
+	res.locals.currentUser = req.user; //set current user in locals for ease of access
+	next();
+});
 
 /**
  * -------------- ROUTES ----------------
  */
 
 app.use("/", indexRouter);
+app.use("/messages", messageRouter);
 //app.use("/users", usersRouter);
 
 // catch 404 and forward to error handler

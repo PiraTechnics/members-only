@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const Message = require("../models/message");
+//const Message = require("../models/message");
 const User = require("../models/user");
 const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
@@ -12,36 +12,63 @@ const bcrypt = require("bcryptjs");
 
 // All Messages, only show if signed in
 router.get("/", function (req, res) {
-	res.render("index", { title: "Members Only", username: "bob123" });
+	if (res.locals.currentUser) {
+		res.render("index", {
+			title: "Members Only",
+			user: res.locals.currentUser,
+		});
+	} else {
+		res.redirect("/login");
+	}
 });
 
 router.get("/login", function (req, res, next) {
-	res.render("login", { title: "Log In" });
+	res.render("login", {
+		title: "Log In",
+	});
 });
 
 router.get("/signup", function (req, res) {
 	res.render("signup", { title: "Sign up" });
 });
 
+router.get("/join", function (req, res) {
+	res.render("join", { user: res.locals.currentUser, errorMessage: false });
+});
+
+router.get("/logout", (req, res, next) => {
+	req.logout((err) => {
+		if (err) {
+			return next(err);
+		}
+		res.redirect("/");
+	});
+});
+
 /* POST routes */
 
-//Login -- currently gets stuck loading on submit
-/* router.post("/login", function (req, res) {
+router.post(
+	"/login",
 	passport.authenticate("local", {
-		failureRedirect: "/error",
-		successRedirect: "/", 
-	});
-}); */
-
-router.post("/login", function (req, res) {
-	res.send("Not yet implemented!");
-});
+		failureRedirect: "/login",
+		successRedirect: "/",
+	})
+);
 
 //Sign-up
 router.post("/signup", [
+	// NOTE: Should sanitize first and last names too
 	body("username", "Name must contain at least 6 characters")
 		.trim()
 		.isLength({ min: 6 }),
+	body("password", "Password must be at least 6 characters").isLength({
+		min: 6,
+	}),
+	body("passwordConfirmation", "Passwords must match!").custom(
+		(value, { req }) => {
+			return value === req.body.password;
+		}
+	),
 	asyncHandler(async (req, res, next) => {
 		const errors = validationResult(req);
 
@@ -61,7 +88,7 @@ router.post("/signup", [
 				// Re-render form with error messages if there are errors
 				if (!errors.isEmpty()) {
 					res.render("signup", {
-						title: "Error, please try again",
+						errorMessage: "Error, please try again",
 						errors: errors.array(),
 					});
 					return;
@@ -77,7 +104,7 @@ router.post("/signup", [
 					if (usernameTaken) {
 						//re-render signup form with error message
 						res.render("signup", {
-							title: "Error, username unavailable",
+							errorMessage: "Error, username unavailable",
 						});
 					} else {
 						await user.save();
@@ -86,6 +113,41 @@ router.post("/signup", [
 				}
 			}
 		});
+	}),
+]);
+
+router.post("/join", [
+	body("accessCode").trim().escape(),
+	asyncHandler(async (req, res, next) => {
+		const errors = validationResult(req);
+
+		if (!errors.isEmpty()) {
+			//re-render with blank form and error messages
+			res.render("join", {
+				user: res.locals.currentUser,
+				errorMessage: errors.toString(),
+			});
+			return;
+		} else if (!res.locals.user) {
+			//No user session, redirect to login page
+			res.redirect("/login");
+		} else {
+			// Compare entered result to our secret access code
+			if (req.body.accessCode !== process.env.SECRET) {
+				// not correct, re-render join form
+				res.render("join", {
+					user: res.locals.currentUser,
+					errorMessage: "wrong secret, try again",
+				});
+				return;
+			} else {
+				//code is correct, set user to member and send to message board
+				const memberUser = req.user;
+				memberUser.member = true;
+				await User.findByIdAndUpdate(req.user.id, memberUser);
+				res.redirect("/");
+			}
+		}
 	}),
 ]);
 

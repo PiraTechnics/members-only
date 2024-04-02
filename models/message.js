@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const { DateTime } = require("luxon");
+require("dotenv").config();
+
+const conn = process.env.DB_STRING;
+const connection = mongoose.createConnection(conn);
 
 const MessageSchema = new Schema({
 	// need message text, ref to user who wrote it, timestamp...what else?
@@ -14,4 +18,4 @@ MessageSchema.virtual("formatted_timestamp").get(function () {
 	return DateTime.fromJSDate(this.timestamp).toLocaleString(DateTime.DATE_MED);
 });
 
-module.exports = mongoose.model("Message", MessageSchema);
+module.exports = connection.model("Message", MessageSchema);
