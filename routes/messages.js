@@ -37,46 +37,50 @@ router.get(
 );
 
 /* POST routes */
-router.post("/mew-message", [
+router.post("/new-message", [
 	//sanitize input and add the message to the database
-	body("title", "Title should be at least 8 characters long")
+	body("title", "Title should be at least 6 characters long")
 		.isLength({
-			min: 8,
+			min: 6,
 		})
 		.escape(),
-	body("message-body", "Message must be at least 10 characters")
+	body("message", "Message must be at least 8 characters")
 		.isLength({ min: 8 })
 		.escape(),
 	asyncHandler(async (req, res, next) => {
 		const errors = validationResult(req);
 
 		if (!errors.isEmpty()) {
+			console.log(errors);
+
 			res.render("new-message", {
+				title: "Members Only",
 				user: res.locals.currentUser,
-				errorMessage: errors.toString(),
 			});
 			return;
-		} else if (!res.locals.user) {
+		} else if (!req.isAuthenticated()) {
 			//No user session, redirect to login page
 			res.redirect("/login");
 		} else {
 			//everything correct, save message to DB and show message board with new posting
+
+			console.log(res.locals.user);
+			console.log(req.user);
+
 			const message = new Message({
 				title: req.body.title,
 				text: req.body.message,
-				user: res.locals.user,
+				user: res.locals.user._id,
 			});
 
 			await message.save();
 			const allMessages = await Message.find();
 
-			// Currently 404'ing here. FIND OUT WHY
-
-			/* 			res.render("message-board", {
+			res.render("message-board", {
 				title: "Members Only",
 				user: res.locals.user,
 				messages: allMessages,
-			}); */
+			});
 		}
 	}),
 ]);
